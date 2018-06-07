@@ -1,0 +1,81 @@
+---
+swagger: "2.0"
+info:
+  description: "A sample API that uses a petstore as an example to demonstrate features\
+    \ in the swagger-2.0 specification"
+  version: "1.0.0"
+  title: "Swagger translator"
+  termsOfService: "http://helloreverb.com/terms/"
+  contact:
+    name: "ISA Research Group"
+    url: "http://www.isa.us.es/"
+    email: "isagroup.us@gmail.com"
+  license:
+    name: "MIT"
+    url: "http://opensource.org/licenses/MIT"
+host: "localhost:5050"
+basePath: "/api/v1"
+schemes:
+- "http"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+paths:
+  /translator:
+    post:
+      operationId: "parse"
+      parameters:
+      - in: "body"
+        name: "agree"
+        description: "The pet JSON you want to post"
+        required: false
+        schema:
+          $ref: "#/definitions/Agree"
+      responses:
+        200:
+          description: "successful operation"
+        400:
+          description: "Invalid Order"
+      x-swagger-router-controller: "Default"
+definitions:
+  Agree:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+      version:
+        type: "string"
+      context:
+        $ref: "#/definitions/Context"
+      terms:
+        $ref: "#/definitions/Terms"
+    example:
+      terms: {}
+      context:
+        provider: "provider"
+        validity: "{}"
+        definitions: "{}"
+        consumer: "consumer"
+      id: "id"
+      version: "version"
+  Context:
+    type: "object"
+    properties:
+      provider:
+        type: "string"
+      consumer:
+        type: "string"
+      validity:
+        type: "object"
+        properties: {}
+      definitions:
+        type: "object"
+        properties: {}
+    example:
+      provider: "provider"
+      validity: "{}"
+      definitions: "{}"
+      consumer: "consumer"
+  Terms:
+    type: "object"

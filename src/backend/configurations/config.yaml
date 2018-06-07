@@ -1,0 +1,74 @@
+production:
+  server: 
+    port: 80
+    timeout: 86400000
+    bodySize: 50mb
+    bypassCORS: false
+    useHelmet: false
+    httpOptionsOK: true
+    servePackageInfo: true
+    listenOnHttps: false
+    diskMemory: 2000000000
+    ramMemory:  20000000
+
+  data:
+    apiKuberntes: "http://192.168.65.3:6443/api/v1"
+    apiInfluxdb: "http://10.1.0.50:8086/query"
+  
+  log:
+    level: info
+    file: './logs/prod-logs.log' #Where log file will be saved. Date will be concatenated before the name.
+    maxSize: 10000000 #(10MB) Maximum file log size, if one file reaches it, a new file is created.
+    maxFiles: 30 # Max Files that can be created per day reaching the maxSize.
+
+development:
+  server: 
+    port: 5050
+    timeout: 86400000
+    bodySize: 50mb
+    bypassCORS: true
+    useHelmet: true
+    httpOptionsOK: true
+    servePackageInfo: true
+    listenOnHttps: false
+    diskMemory: 2000000000
+    ramMemory:  20000000
+  
+  data:
+    apiKuberntes: "http://localhost:8001/api/v1"
+    apiInfluxdb: "http://localhost:30086/query"
+    
+  log:
+    level: debug
+    file: './logs/dev-logs.log' #Where log file will be saved. Date will be concatenated before the name.
+    maxSize: 10000000 #(10MB) Maximum file log size, if one file reaches it, a new file is created.
+    maxFiles: 30 # Max Files that can be created per day reaching the maxSize.
+
+testing:
+  server:
+    port: 5000
+    timeout: 86400000
+    bodySize: 50mb
+    bypassCORS: true
+    useHelmet: true
+    httpOptionsOK: true
+    servePackageInfo: true
+    listenOnHttps: false
+    diskMemory: 2000000000
+    ramMemory:  20000000
+
+  eslint:
+    ignore:
+      - ''
+      - ''
+  
+  data:
+    apiKuberntes: "http://localhost:8001/api/v1"
+    apiInfluxdb: "http://localhost:30086/query"
+
+  log:
+    level: debug
+    file: './logs/test-logs.log' #Where log file will be saved. Date will be concatenated before the name.
+    maxSize: 10000000 #(10MB) Maximum file log size, if one file reaches it, a new file is created.
+    maxFiles: 30 # Max Files that can be created per day reaching the maxSize.
+  

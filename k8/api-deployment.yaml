@@ -1,0 +1,20 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: apiBilling
+  name: apiBilling
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: apiBilling
+    spec:
+      containers:
+      - name: apiBilling
+        image: api_billing_poetisa
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+
