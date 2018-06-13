@@ -2,18 +2,18 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   labels:
-    app: apiBilling
-  name: apiBilling
+    app: apiTranslator
+  name: apiTranslator
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        app: apiBilling
+        app: apiTranslator
     spec:
       containers:
-      - name: apiBilling
-        image: api_billing_poetisa
+      - name: apiTranslator
+        image: api_translator_poetisa
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80

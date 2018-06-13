@@ -2,6 +2,8 @@
 
 var moment = require('moment');
 var request = require('request');
+
+const logger = require("../logger");
 /**
  *
  * agree Agree The pet JSON you want to post (optional)
@@ -11,13 +13,13 @@ exports.parse = function (agree) {
   return new Promise(function (resolve, reject) {
     // date
     var dateFrom = moment(agree.terms.guarantees[0].of[0].window.initial);
-    console.log("from: " + dateFrom.toISOString());
+    logger.info("from: " + dateFrom.toISOString());
 
     // metric
     var map = new Map;
     var metrics = [];
     var metricsNames = Object.keys(agree.terms.metrics);
-    console.log("metric: " + metricsNames);
+    logger.info("metric: " + metricsNames);
     metricsNames.forEach(metric => {
       var url = agree.terms.metrics[metric].computer;
       map.set(metric, url);
@@ -25,22 +27,24 @@ exports.parse = function (agree) {
         name: metric,
         id: 1,
         url: url
-      }
+      };
       metrics.push(metricJson);
     });
-    getConditions(agree, metrics).then(rules => {
-      var json = {
-        from: dateFrom.format('YYYY-MM-DD'),
-        rules: rules,
-        metrics: metrics,
-        to: dateFrom.add(1, 'M').format('YYYY-MM-DD')
-      };
-      console.log("json: " + JSON.stringify(json));
+    getMetricsGuarantees(agree).then(newMetric => {
+      metrics = metrics.concat(newMetric);
+      getConditions(agree, metrics).then(rules => {
+        var json = {
+          from: dateFrom.format('YYYY-MM-DD'),
+          rules: rules,
+          metrics: metrics,
+          to: dateFrom.add(1, 'M').format('YYYY-MM-DD')
+        };
+        logger.info("json: " + JSON.stringify(json));
 
-      apiRequest(json).then(result => {
-        resolve(result);
+        apiRequest(json).then(result => {
+          resolve(result);
+        });
       });
-
     });
   });
 };
@@ -51,17 +55,40 @@ function getConditions(agree) {
     var rewards = [];
     if (agree.terms.guarantees[0].of[0].rewards) {
       rewards = agree.terms.guarantees[0].of[0].rewards[0].of;
-      console.log("rewards: " + rewards);
+      logger.info("rewards: " + rewards);
     }
     var penalties = [];
     if (agree.terms.guarantees[0].of[0].penalties) {
       penalties = agree.terms.guarantees[0].of[0].penalties[0].of;
-      console.log("penalties: " + penalties);
+      logger.info("penalties: " + penalties);
+    }
+    if (agree.terms.pricing.billing.rewards[0].of) {
+      rewards = rewards.concat(agree.terms.pricing.billing.rewards[0].of);
+      logger.info("rewards: " + rewards);
+    }
+    var guarantees = [];
+    if (agree.terms.guarantees[0].of) {
+      let objectives = agree.terms.guarantees[0].of;
+      objectives.forEach(object => {
+        var nodes = object.scope.node.split(", ");
+        nodes.forEach(node => {
+          var name = object.objective.split(" ")[0];
+          var condition = name + node + object.objective.split(name)[1];
+          var obj = {
+            condition: condition,
+          };
+          guarantees.push(obj);
+        });
+      });
+      logger.info("guarantees: " + rewards);
     }
     getConditionsBy(rewards, "reward").then(rulesRewards => {
       getConditionsBy(penalties, "penalties").then(rulesPenalties => {
-        var rules = rulesRewards.concat(rulesPenalties);
-        resolve(rules);
+        getConditionsBy(guarantees, "guarantees").then(rulesGuarantees => {
+          var rules = rulesRewards.concat(rulesPenalties);
+          rules = rules.concat(rulesGuarantees);
+          resolve(rules);
+        });
       });
     });
   });
@@ -70,11 +97,10 @@ function getConditions(agree) {
 function getConditionsBy(array, name) {
   return new Promise(function (resolve, reject) {
     var rules = [];
-    if (array.length < 0) {
+    if (array.length == 0) {
       resolve([]);
     } else {
       array.forEach(element => {
-
         let ele = (element.condition).split("&&");
         let condition = [];
         ele.forEach(rul => {
@@ -104,10 +130,16 @@ function getConditionsBy(array, name) {
           };
           condition.push(conditionJSON);
         });
+        var message;
+        if (element.value) {
+          message = name + " of " + element.value + "%";
+        } else {
+          message = name;
+        }
         let event = {
           fact: name,
           value: element.value,
-          message: name + " of " + element.value + "%"
+          message: message
         };
         let rule = {
           conditions: {
@@ -125,16 +157,33 @@ function getConditionsBy(array, name) {
   });
 }
 
+function getMetricsGuarantees(agree) {
+  return new Promise(function (resolve, reject) {
+    var metricsGuarantees = [];
+    agree.terms.guarantees[0].of.forEach(element => {
+      var nodes = element.scope.node.split(", ");
+      var name = element.objective.split(" ")[0];
+      nodes.forEach(node => {
+        let metricJson = {
+          name: name + node,
+          id: 1,
+          url: agree.terms.metrics[name].computer + "&node=" + node
+        };
+        metricsGuarantees.push(metricJson);
+      });
+    });
+    resolve(metricsGuarantees);
+  });
+}
+
 function apiRequest(json) {
   return new Promise(function (resolve, reject) {
-    var metrics = json.metrics;
     var url = "http://localhost:5000/api/v1/billings";
     var headers = {
       'Cache-Control': 'no-cache',
       'Content-Type': 'application/json'
-    }
+    };
     var promises = [];
-    // metrics.forEach(metric => {
     promises.push(
       new Promise((resolve, reject) => {
         request({
@@ -146,17 +195,17 @@ function apiRequest(json) {
           },
           (err, res, body) => {
             if (err) {
-              console.log(err);
+              logger.info(err);
               reject(err);
             }
-            // console.log(res.statusCode);
+            // logger.info(res.statusCode);
             resolve(body);
           });
       })
     );
     // });
     Promise.all(promises).then(value => {
-      console.log(value);
+      logger.info(value);
       resolve(value);
     });
   });
