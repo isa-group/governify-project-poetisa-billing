@@ -70,11 +70,12 @@ function getConditions(agree) {
     if (agree.terms.guarantees[0].of) {
       let objectives = agree.terms.guarantees[0].of;
       objectives.forEach(object => {
-        var nodes = object.scope.node.split(", ");
+        let nodes = object.scope.node.split(", ");
         nodes.forEach(node => {
-          var name = object.objective.split(" ")[0];
-          var condition = name + node + object.objective.split(name)[1];
-          var obj = {
+          let name = object.objective.split(" ")[0] + node;
+          let reg = new RegExp(object.objective.split(" ")[0], 'g');
+          let condition = object.objective.replace(reg, name);
+          let obj = {
             condition: condition,
           };
           guarantees.push(obj);
