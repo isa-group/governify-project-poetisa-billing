@@ -70,10 +70,11 @@ function getConditions(agree) {
     if (agree.terms.guarantees[0].of) {
       let objectives = agree.terms.guarantees[0].of;
       objectives.forEach(object => {
-        let nodes = object.scope.node.split(", ");
+        object.objective = object.objective.replace(/\s/g, "");
+        let nodes = object.scope.node.split(/[\s,]+/);
         nodes.forEach(node => {
-          let name = object.objective.split(" ")[0] + node;
-          let reg = new RegExp(object.objective.split(" ")[0], 'g');
+          let name = object.objective.split(/(>=|<=|<|>|==)/)[0] + node;
+          let reg = new RegExp(object.objective.split(/(>=|<=|<|>|==)/)[0], 'g');
           let condition = object.objective.replace(reg, name);
           let obj = {
             condition: condition,
@@ -106,11 +107,9 @@ function getConditionsBy(array, name) {
         let condition = [];
         ele.forEach(rul => {
           let con;
-          if (rul.split(" ")[0] === "") {
-            rul = rul.slice(1);
-          }
-          let value = rul.split(" ")[2];
-          switch (rul.split(" ")[1]) {
+          rul = rul.replace(/\s/g, "");
+          let value = rul.split(/(>=|<=|<|>|==)/)[2];
+          switch (rul.split(/(>=|<=|<|>|==)/)[1]) {
             case ">":
               con = "greaterThan";
               break;
@@ -125,7 +124,7 @@ function getConditionsBy(array, name) {
               break;
           }
           let conditionJSON = {
-            fact: rul.split(" ")[0],
+            fact: rul.split(/(>=|<=|<|>|==)/)[0],
             value: value.toString(),
             operator: con
           };
@@ -162,8 +161,8 @@ function getMetricsGuarantees(agree) {
   return new Promise(function (resolve, reject) {
     var metricsGuarantees = [];
     agree.terms.guarantees[0].of.forEach(element => {
-      var nodes = element.scope.node.split(", ");
-      var name = element.objective.split(" ")[0];
+      var nodes = element.scope.node.split(/[\s,]+/);
+      var name = element.objective.split(/(>=|<=|<|>|==)/)[0].replace(/\s/g, "");
       nodes.forEach(node => {
         let metricJson = {
           name: name + node,
