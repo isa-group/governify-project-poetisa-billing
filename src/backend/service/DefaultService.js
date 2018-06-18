@@ -1,9 +1,11 @@
 'use strict';
 
-var moment = require('moment');
-var request = require('request');
+const moment = require('moment');
+const request = require('request');
 
 const logger = require("../logger");
+const config = require("../configurations");
+
 /**
  *
  * agree Agree The pet JSON you want to post (optional)
@@ -15,14 +17,14 @@ exports.parse = function (agree) {
     var dateFrom = moment(agree.terms.guarantees[0].of[0].window.initial);
     logger.info("from: " + dateFrom.toISOString());
 
-    // metric
-    var map = new Map;
+    // metrics
     var metrics = [];
     var metricsNames = Object.keys(agree.terms.metrics);
     logger.info("metric: " + metricsNames);
+
+    // all metrics are added in an array
     metricsNames.forEach(metric => {
       var url = agree.terms.metrics[metric].computer;
-      map.set(metric, url);
       let metricJson = {
         name: metric,
         id: 1,
@@ -30,6 +32,8 @@ exports.parse = function (agree) {
       };
       metrics.push(metricJson);
     });
+
+    // the guarantees are added like a metrics
     getMetricsGuarantees(agree).then(newMetric => {
       metrics = metrics.concat(newMetric);
       getConditions(agree, metrics).then(rules => {
@@ -40,7 +44,7 @@ exports.parse = function (agree) {
           to: dateFrom.add(1, 'M').format('YYYY-MM-DD')
         };
         logger.info("json: " + JSON.stringify(json));
-
+        // when I have the complete json I make a request to the API.
         apiRequest(json).then(result => {
           resolve(result);
         });
@@ -51,27 +55,31 @@ exports.parse = function (agree) {
 
 function getConditions(agree) {
   return new Promise(function (resolve, reject) {
-    var rules = [];
+    // the rewards
     var rewards = [];
     if (agree.terms.guarantees[0].of[0].rewards) {
       rewards = agree.terms.guarantees[0].of[0].rewards[0].of;
       logger.info("rewards: " + rewards);
     }
+    if (agree.terms.pricing.billing.rewards[0].of) {
+      rewards = rewards.concat(agree.terms.pricing.billing.rewards[0].of);
+      logger.info("rewards: " + rewards);
+    }
+    // the penalties
     var penalties = [];
     if (agree.terms.guarantees[0].of[0].penalties) {
       penalties = agree.terms.guarantees[0].of[0].penalties[0].of;
       logger.info("penalties: " + penalties);
     }
-    if (agree.terms.pricing.billing.rewards[0].of) {
-      rewards = rewards.concat(agree.terms.pricing.billing.rewards[0].of);
-      logger.info("rewards: " + rewards);
-    }
+    // the guarantees
     var guarantees = [];
     if (agree.terms.guarantees[0].of) {
+      // Here are all the objectives of the type of guarantee that the system should be satisfied. 
       let objectives = agree.terms.guarantees[0].of;
       objectives.forEach(object => {
         object.objective = object.objective.replace(/\s/g, "");
         let nodes = object.scope.node.split(/[\s,]+/);
+        // in this case are differentiated by nodes 
         nodes.forEach(node => {
           let name = object.objective.split(/(>=|<=|<|>|==)/)[0] + node;
           let reg = new RegExp(object.objective.split(/(>=|<=|<|>|==)/)[0], 'g');
@@ -84,9 +92,11 @@ function getConditions(agree) {
       });
       logger.info("guarantees: " + rewards);
     }
-    getConditionsBy(rewards, "reward").then(rulesRewards => {
-      getConditionsBy(penalties, "penalties").then(rulesPenalties => {
-        getConditionsBy(guarantees, "guarantees").then(rulesGuarantees => {
+
+    // get all the rules
+    buildRules(rewards, "reward").then(rulesRewards => {
+      buildRules(penalties, "penalties").then(rulesPenalties => {
+        buildRules(guarantees, "guarantees").then(rulesGuarantees => {
           var rules = rulesRewards.concat(rulesPenalties);
           rules = rules.concat(rulesGuarantees);
           resolve(rules);
@@ -96,7 +106,12 @@ function getConditions(agree) {
   });
 }
 
-function getConditionsBy(array, name) {
+/**
+ * A method by which rules are built to be added to an array 
+ * @param {*} array 
+ * @param {*} name 
+ */
+function buildRules(array, name) {
   return new Promise(function (resolve, reject) {
     var rules = [];
     if (array.length == 0) {
@@ -132,7 +147,7 @@ function getConditionsBy(array, name) {
         });
         var message;
         if (element.value) {
-          message = name + " of " + element.value + "%";
+          message = name + ": " + element.value + "% because " + element.condition;
         } else {
           message = name;
         }
@@ -157,6 +172,10 @@ function getConditionsBy(array, name) {
   });
 }
 
+/**
+ * Obtain the metrics of the guarantees 
+ * @param {*} agree 
+ */
 function getMetricsGuarantees(agree) {
   return new Promise(function (resolve, reject) {
     var metricsGuarantees = [];
@@ -176,9 +195,14 @@ function getMetricsGuarantees(agree) {
   });
 }
 
+
+/**
+ * Request to the api to get the invoice discount
+ * @param {*} json 
+ */
 function apiRequest(json) {
   return new Promise(function (resolve, reject) {
-    var url = "http://localhost:5000/api/v1/billings";
+    var url = config.data.apiBilling;
     var headers = {
       'Cache-Control': 'no-cache',
       'Content-Type': 'application/json'
