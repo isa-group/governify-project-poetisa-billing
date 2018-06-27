@@ -12,7 +12,7 @@ production:
     ramMemory:  20000000
 
   data:
-    apiBilling: "http://localhost:5000/api/v1/billings"
+    apiBilling: "http://10.1.0.157:5000/api/v1/billings"
   
   log:
     level: info

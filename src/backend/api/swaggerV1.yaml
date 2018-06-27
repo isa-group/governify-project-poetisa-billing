@@ -26,6 +26,9 @@ paths:
     post:
       operationId: "parse"
       parameters:
+      - name: "moth"
+        in: "query"
+        type: "string"
       - in: "body"
         name: "agree"
         description: "The pet JSON you want to post"

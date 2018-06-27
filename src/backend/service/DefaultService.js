@@ -1,7 +1,7 @@
-'use strict';
+"use strict";
 
-const moment = require('moment');
-const request = require('request');
+const moment = require("moment");
+const request = require("request");
 
 const logger = require("../logger");
 const config = require("../configurations");
@@ -11,10 +11,11 @@ const config = require("../configurations");
  * agree Agree The pet JSON you want to post (optional)
  * no response value expected for this operation
  **/
-exports.parse = function (agree) {
+exports.parse = function (agree, moth) {
   return new Promise(function (resolve, reject) {
     // date
-    var dateFrom = moment(agree.terms.guarantees[0].of[0].window.initial);
+    var date = (moment(agree.terms.pricing.billing.initial));
+    var dateFrom = moment(date.year() + "-" + moth + "-" + date.day(), "YYYY-MM-DD");
     logger.info("from: " + dateFrom.toISOString());
 
     // metrics
@@ -38,10 +39,10 @@ exports.parse = function (agree) {
       metrics = metrics.concat(newMetric);
       getConditions(agree, metrics).then(rules => {
         var json = {
-          from: dateFrom.format('YYYY-MM-DD'),
+          from: dateFrom.format("YYYY-MM-DD"),
           rules: rules,
           metrics: metrics,
-          to: dateFrom.add(1, 'M').format('YYYY-MM-DD')
+          to: dateFrom.add(1, "M").format("YYYY-MM-DD")
         };
         logger.info("json: " + JSON.stringify(json));
         // when I have the complete json I make a request to the API.
@@ -74,18 +75,18 @@ function getConditions(agree) {
     // the guarantees
     var guarantees = [];
     if (agree.terms.guarantees[0].of) {
-      // Here are all the objectives of the type of guarantee that the system should be satisfied. 
+      // Here are all the objectives of the type of guarantee that the system should be satisfied.
       let objectives = agree.terms.guarantees[0].of;
       objectives.forEach(object => {
-        object.objective = object.objective.replace(/\s/g, "");
+        // object.objective = object.objective.replace(/\s/g, "");
         let nodes = object.scope.node.split(/[\s,]+/);
-        // in this case are differentiated by nodes 
+        // in this case are differentiated by nodes
         nodes.forEach(node => {
-          let name = object.objective.split(/(>=|<=|<|>|==)/)[0] + node;
-          let reg = new RegExp(object.objective.split(/(>=|<=|<|>|==)/)[0], 'g');
+          let name = (object.objective.split(/(>=|<=|<|>|==)/)[0] + "+" + node).replace(/\s/g, "") + " ";
+          let reg = new RegExp(object.objective.split(/(>=|<=|<|>|==)/)[0], "g");
           let condition = object.objective.replace(reg, name);
           let obj = {
-            condition: condition,
+            condition: condition
           };
           guarantees.push(obj);
         });
@@ -96,7 +97,7 @@ function getConditions(agree) {
     // get all the rules
     buildRules(rewards, "reward").then(rulesRewards => {
       buildRules(penalties, "penalties").then(rulesPenalties => {
-        buildRules(guarantees, "guarantees").then(rulesGuarantees => {
+        buildRulesGarantees(guarantees, "guarantees").then(rulesGuarantees => {
           var rules = rulesRewards.concat(rulesPenalties);
           rules = rules.concat(rulesGuarantees);
           resolve(rules);
@@ -107,9 +108,9 @@ function getConditions(agree) {
 }
 
 /**
- * A method by which rules are built to be added to an array 
- * @param {*} array 
- * @param {*} name 
+ * A method by which rules are built to be added to an array
+ * @param {*} array
+ * @param {*} name
  */
 function buildRules(array, name) {
   return new Promise(function (resolve, reject) {
@@ -118,7 +119,7 @@ function buildRules(array, name) {
       resolve([]);
     } else {
       array.forEach(element => {
-        let ele = (element.condition).split("&&");
+        let ele = element.condition.split("&&");
         let condition = [];
         ele.forEach(rul => {
           let con;
@@ -147,7 +148,7 @@ function buildRules(array, name) {
         });
         var message;
         if (element.value) {
-          message = name + ": " + element.value + "% because " + element.condition;
+          message = name + ": " + element.value + "% because ->" + element.condition;
         } else {
           message = name;
         }
@@ -173,8 +174,8 @@ function buildRules(array, name) {
 }
 
 /**
- * Obtain the metrics of the guarantees 
- * @param {*} agree 
+ * Obtain the metrics of the guarantees
+ * @param {*} agree
  */
 function getMetricsGuarantees(agree) {
   return new Promise(function (resolve, reject) {
@@ -184,7 +185,7 @@ function getMetricsGuarantees(agree) {
       var name = element.objective.split(/(>=|<=|<|>|==)/)[0].replace(/\s/g, "");
       nodes.forEach(node => {
         let metricJson = {
-          name: name + node,
+          name: name + "+" + node,
           id: 1,
           url: agree.terms.metrics[name].computer + "&node=" + node
         };
@@ -195,17 +196,16 @@ function getMetricsGuarantees(agree) {
   });
 }
 
-
 /**
  * Request to the api to get the invoice discount
- * @param {*} json 
+ * @param {*} json
  */
 function apiRequest(json) {
   return new Promise(function (resolve, reject) {
     var url = config.data.apiBilling;
     var headers = {
-      'Cache-Control': 'no-cache',
-      'Content-Type': 'application/json'
+      "Cache-Control": "no-cache",
+      "Content-Type": "application/json"
     };
     var promises = [];
     promises.push(
@@ -224,7 +224,8 @@ function apiRequest(json) {
             }
             // logger.info(res.statusCode);
             resolve(body);
-          });
+          }
+        );
       })
     );
     // });
@@ -232,5 +233,72 @@ function apiRequest(json) {
       logger.info(value);
       resolve(value);
     });
+  });
+}
+
+/**
+ * A method by which rules are built to be added to an array
+ * because they are guarantees we change the sign of the operation to check that they work
+ * @param {*} array
+ * @param {*} name
+ */
+function buildRulesGarantees(array, name) {
+  return new Promise(function (resolve, reject) {
+    var rules = [];
+    if (array.length == 0) {
+      resolve([]);
+    } else {
+      array.forEach(element => {
+        let ele = element.condition.split("&&");
+        let condition = [];
+        ele.forEach(rul => {
+          let con;
+          rul = rul.replace(/\s/g, "");
+          let value = rul.split(/(>=|<=|<|>|==)/)[2];
+          switch (rul.split(/(>=|<=|<|>|==)/)[1]) {
+            case ">":
+              con = "lessThan";
+              break;
+            case ">=":
+              con = "lessThanInclusive";
+              break;
+            case "<":
+              con = "greaterThan";
+              break;
+            case "<=":
+              con = "greaterThanInclusive";
+              break;
+          }
+          let conditionJSON = {
+            fact: rul.split(/(>=|<=|<|>|==)/)[0],
+            value: value.toString(),
+            operator: con
+          };
+          condition.push(conditionJSON);
+        });
+        var message;
+        if (element.value) {
+          message = name + ": " + element.value + "% because " + element.condition;
+        } else {
+          message = "not " + name + " ->" + element.condition;
+        }
+        let event = {
+          fact: name,
+          value: "0",
+          message: message
+        };
+        let rule = {
+          conditions: {
+            all: condition
+          },
+          event: {
+            params: event,
+            type: "garantee-fact"
+          }
+        };
+        rules.push(rule);
+      });
+      resolve(rules);
+    }
   });
 }
