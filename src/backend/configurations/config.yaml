@@ -3,7 +3,7 @@ production:
     port: 80
     timeout: 86400000
     bodySize: 50mb
-    bypassCORS: false
+    bypassCORS: true
     useHelmet: false
     httpOptionsOK: true
     servePackageInfo: true
