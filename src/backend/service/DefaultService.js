@@ -219,7 +219,7 @@ function apiRequest(json) {
           },
           (err, res, body) => {
             if (err) {
-              logger.info(err);
+              logger.info("POST "+url+": "+err);
               reject(err);
             }
             // logger.info(res.statusCode);
