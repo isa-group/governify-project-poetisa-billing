@@ -1,16 +1,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: apiTranslator
+  name: api-translator
   labels:
-    app: apiTranslator
+    app: api-translator
 spec:
   selector:
-    app: apiTranslator
+    app: api-translator
   ports:
   - name: "80"
     port: 80
     targetPort: 80
-    nodePort: 30500
+    nodePort: 30502
   type: "NodePort"
   
