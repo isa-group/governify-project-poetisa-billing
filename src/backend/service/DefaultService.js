@@ -11,11 +11,10 @@ const config = require("../configurations");
  * agree Agree The pet JSON you want to post (optional)
  * no response value expected for this operation
  **/
-exports.parse = function (agree, moth) {
+exports.parse = function (agree, date) {
   return new Promise(function (resolve, reject) {
     // date
-    var date = (moment(agree.terms.pricing.billing.initial));
-    var dateFrom = moment(date.year() + "-" + moth + "-" + date.day(), "YYYY-MM-DD");
+    var dateFrom = moment(date);
     logger.info("from: " + dateFrom.toISOString());
 
     // metrics
@@ -219,7 +218,7 @@ function apiRequest(json) {
           },
           (err, res, body) => {
             if (err) {
-              logger.info("POST "+url+": "+err);
+              logger.info("POST " + url + ": " + err);
               reject(err);
             }
             // logger.info(res.statusCode);

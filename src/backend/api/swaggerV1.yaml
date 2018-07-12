@@ -26,7 +26,7 @@ paths:
     post:
       operationId: "parse"
       parameters:
-      - name: "moth"
+      - name: "date"
         in: "query"
         type: "string"
       - in: "body"
