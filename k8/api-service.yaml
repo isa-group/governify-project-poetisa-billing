@@ -11,6 +11,7 @@ spec:
   - name: "80"
     port: 80
     targetPort: 80
-    nodePort: 30502
-  type: "NodePort"
+  #   nodePort: 30502
+  # type: "NodePort"
+  type: "LoadBalancer"
   

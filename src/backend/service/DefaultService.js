@@ -143,6 +143,7 @@ function buildRules(array, name) {
             value: value.toString(),
             operator: con
           };
+          logger.info(conditionJSON);
           condition.push(conditionJSON);
         });
         var message;
@@ -186,7 +187,8 @@ function getMetricsGuarantees(agree) {
         let metricJson = {
           name: name + "+" + node,
           id: 1,
-          url: agree.terms.metrics[name].computer + "&node=" + node
+          // node o pod_mame o namespace
+          url: agree.terms.metrics[name].computer + "&pod_mame=" + node
         };
         metricsGuarantees.push(metricJson);
       });
