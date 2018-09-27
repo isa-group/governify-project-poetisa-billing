@@ -187,8 +187,8 @@ function getMetricsGuarantees(agree) {
         let metricJson = {
           name: name + "+" + node,
           id: 1,
-          // node o pod_mame o namespace
-          url: agree.terms.metrics[name].computer + "&pod_mame=" + node
+          // node o pod_name o namespace
+          url: agree.terms.metrics[name].computer + "&pod_name=" + node
         };
         metricsGuarantees.push(metricJson);
       });
