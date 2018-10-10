@@ -1,4 +1,3 @@
----
 swagger: "2.0"
 info:
   description: "A sample API that uses a petstore as an example to demonstrate features\
@@ -13,28 +12,29 @@ info:
   license:
     name: "MIT"
     url: "http://opensource.org/licenses/MIT"
-host: "localhost:30502"
+host: "localhost:5050"
 basePath: "/api/v1"
 schemes:
-- "http"
+  - "http"
 consumes:
-- "application/json"
+  - "application/json"
 produces:
-- "application/json"
+  - "application/json"
 paths:
-  /translator:
+  /billing:
     post:
       operationId: "parse"
       parameters:
-      - name: "date"
-        in: "query"
-        type: "string"
-      - in: "body"
-        name: "agree"
-        description: "The pet JSON you want to post"
-        required: false
-        schema:
-          $ref: "#/definitions/Agree"
+        - name: "date"
+          in: "query"
+          type: "string"
+          required: true
+        - in: "body"
+          name: "agree"
+          description: "The pet JSON you want to post"
+          required: false
+          schema:
+            $ref: "#/definitions/Agree"
       responses:
         200:
           description: "successful operation"

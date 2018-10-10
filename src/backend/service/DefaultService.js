@@ -45,8 +45,14 @@ exports.parse = function (agree, date) {
         };
         logger.info("json: " + JSON.stringify(json));
         // when I have the complete json I make a request to the API.
-        apiRequest(json).then(result => {
-          resolve(result);
+        apiRequest(json).then(resultSLO => {
+          getDataBilling(date, agree).then(bill => {
+            var result = resultSLO;
+            result[0].bill = eval(bill);
+            result[0].billWithDiscount = (result[0].bill * resultSLO[0].percentage) / 100;
+            logger.info("bill: " + result[0].bill);
+            resolve(result);
+          });
         });
       });
     });
@@ -96,7 +102,7 @@ function getConditions(agree) {
     // get all the rules
     buildRules(rewards, "reward").then(rulesRewards => {
       buildRules(penalties, "penalties").then(rulesPenalties => {
-        buildRulesGarantees(guarantees, "guarantees").then(rulesGuarantees => {
+        buildRulesGuarantees(guarantees, "guarantees").then(rulesGuarantees => {
           var rules = rulesRewards.concat(rulesPenalties);
           rules = rules.concat(rulesGuarantees);
           resolve(rules);
@@ -203,7 +209,7 @@ function getMetricsGuarantees(agree) {
  */
 function apiRequest(json) {
   return new Promise(function (resolve, reject) {
-    var url = config.data.apiBilling;
+    var url = config.data.apiEvaluating;
     var headers = {
       "Cache-Control": "no-cache",
       "Content-Type": "application/json"
@@ -231,7 +237,7 @@ function apiRequest(json) {
     );
     // });
     Promise.all(promises).then(value => {
-      logger.info(value);
+      logger.info("evaluate response: " + JSON.stringify(value));
       resolve(value);
     });
   });
@@ -243,7 +249,7 @@ function apiRequest(json) {
  * @param {*} array
  * @param {*} name
  */
-function buildRulesGarantees(array, name) {
+function buildRulesGuarantees(array, name) {
   return new Promise(function (resolve, reject) {
     var rules = [];
     if (array.length == 0) {
@@ -302,4 +308,102 @@ function buildRulesGarantees(array, name) {
       resolve(rules);
     }
   });
+}
+
+function getDataBilling(date, agree) {
+  var dateTo = moment(date).add(1, "M").format("YYYY-MM-DD");
+  var condition, metric, urlData, value, data;
+  var find = false;
+  metric = agree.terms.pricing.billing.cost.of[0].condition.split(/(>=|<=|<|>|==)/)[0].replace(/\s/g, "");
+  urlData = agree.terms.metrics[metric].computer;
+  return new Promise((resolve, reject) => {
+    getMetric(urlData, date, dateTo, metric).then(valueMetric => {
+      for (let i = 0; agree.terms.pricing.billing.cost.of.length > i && !find; i++) {
+        logger.info("i: " + i);
+        condition = agree.terms.pricing.billing.cost.of[i].condition;
+        if (Number.isInteger(valueMetric.value)) {
+          condition = condition.replace(metric, valueMetric.value);
+        } else {
+          condition = condition.replace(metric, 0);
+        }
+        if (eval(condition)) {
+          find = true;
+          value = agree.terms.pricing.billing.cost.of[i].value;
+          value = value.replace(metric, valueMetric.value);
+          data = agree.terms.pricing.billing.cost.of[i].with
+        }
+      }
+      getValueMetrics(agree, data, date, dateTo, value).then(result => {
+        return resolve(result)
+      })
+    });
+  });
+}
+
+function getMetric(urlData, from, to, metric) {
+  var url = urlData.split("&")[0];
+  if (!!urlData.split("&")[1]) {
+    url += "?from=" + from + "&" + urlData.split("&")[1];
+  } else {
+    url += "?from=" + from;
+  }
+  if (to) {
+    url = url + "&to=" + to;
+  }
+  var res;
+  return new Promise((resolve, reject) => {
+    var headers = {
+      "Cache-Control": "no-cache",
+      "Content-Type": "application/json"
+    };
+    request({
+        method: "GET",
+        url: url,
+        headers: headers,
+        json: true
+      },
+      (err, res, body) => {
+        if (err) {
+          logger.info("GET " + url + ": " + err);
+          return reject(err);
+        }
+        if (body.response.value) {
+          logger.info("body " + body.response.value);
+          res = {
+            metric: metric,
+            value: body.response.value
+          }
+          return resolve(res);
+        } else {
+          logger.info("body " + body.response);
+          res = {
+            metric: metric,
+            value: body.response
+          }
+          return resolve(res);
+        }
+      }
+    );
+  });
+}
+
+function getValueMetrics(agree, data, from, to, value) {
+  return new Promise((resolve, reject) => {
+    var promises = [];
+    data.forEach(element => {
+      if (agree.terms.pricing.billing.cost.over.baseCost[element]) {
+        value = value.replace(element, agree.terms.pricing.billing.cost.over.baseCost[element])
+      } else if (agree.terms.metrics[element].computer) {
+        promises.push(getMetric(agree.terms.metrics[element].computer, from, to, element))
+      }
+    })
+    Promise.all(promises).then(infoMetrics => {
+      infoMetrics.forEach(infoMetric => {
+        value = value.replace(infoMetric.metric, infoMetric.value)
+        logger.info(value)
+        logger.info("evaluate response: " + JSON.stringify(infoMetric));
+      })
+      return resolve(value)
+    })
+  })
 }
