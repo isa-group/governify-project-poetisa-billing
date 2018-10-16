@@ -12,8 +12,7 @@ production:
     ramMemory: 20000000
 
   data:
-    apiEvaluating: "http://10.96.168.0/api/v1/evaluate"
-    apiMetric: "http://10.96.0.100/api/v1/bill"
+    apiEvaluating: "http://10.97.253.249/api/v1/evaluate"
 
   log:
     level: info
@@ -35,8 +34,7 @@ development:
     ramMemory: 20000000
 
   data:
-    apiEvaluating: "http://localhost:30501/api/v1/evaluate"
-    apiMetric: "http://localhost:30505/api/v1/bill"
+    apiEvaluating: "http://localhost:5000/api/v1/evaluate"
 
   log:
     level: debug
@@ -64,7 +62,6 @@ testing:
 
   data:
     apiEvaluating: "http://localhost:5000/api/v1/evaluate"
-    apiMetric: "http://localhost:5004/api/v1/bill"
   log:
     level: debug
     file: "./logs/test-logs.log" #Where log file will be saved. Date will be concatenated before the name.

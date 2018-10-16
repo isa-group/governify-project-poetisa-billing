@@ -6,6 +6,8 @@ const request = require("request");
 const logger = require("../logger");
 const config = require("../configurations");
 
+const influx = require("./Influx");
+
 /**
  *
  * agree Agree The pet JSON you want to post (optional)
@@ -48,9 +50,26 @@ exports.parse = function (agree, date) {
         apiRequest(json).then(resultSLO => {
           getDataBilling(date, agree).then(bill => {
             var result = resultSLO;
-            result[0].bill = eval(bill);
-            result[0].billWithDiscount = (result[0].bill * resultSLO[0].percentage) / 100;
+            var infoBill = {
+              billId: 1,
+              provider: agree.provider,
+              consumer: agree.consumer,
+              initialDate: date,
+              endDate: dateFrom.add(1, "M").format("YYYY-MM-DD"),
+              billingDate: moment().format("YYYY-MM-DD"),
+              totalWithout: eval(bill),
+              total: (eval(bill) * resultSLO[0].percentage) / 100,
+              concepts: {
+                description: "discount",
+                subtotal: (result[0].bill * resultSLO[0].percentage) / 100
+              },
+              state: "billed"
+            };
+            result[0].bill = infoBill;
+            // result[0].billWithDiscount = (result[0].bill * resultSLO[0].percentage) / 100;
             logger.info("bill: " + result[0].bill);
+            logger.info("Write Influx");
+            influx.writeInflux(result[0]);
             resolve(result);
           });
         });
