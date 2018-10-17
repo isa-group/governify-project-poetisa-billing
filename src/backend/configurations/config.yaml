@@ -12,7 +12,9 @@ production:
     ramMemory: 20000000
 
   data:
-    apiEvaluating: "http://10.97.253.249/api/v1/evaluate"
+    apiEvaluating: "http://10.99.169.45/api/v1/evaluate"
+    hostInflux: 10.109.241.183
+    portInflux: 8086
 
   log:
     level: info

@@ -12,11 +12,20 @@ var measurementBilling = "slo-evaluating";
 exports.writeInflux = function (dataBilling) {
     logger.info(dataBilling);
     var data = {
-        from: dataBilling.from,
-        to: dataBilling.to,
-        value: dataBilling.percentage,
-        billingDate: dataBilling.bill.billingDate,
-        billTotal: dataBilling.bill.total
+        // value: dataBilling.percentage,
+        // billTotal: dataBilling.bill.total,
+        provider: agree.provider,
+        consumer: agree.consumer,
+        initialDate: dataBilling.from,
+        endDate: dataBilling.to,
+        billingDate: dataBilling.bill.dataBilling,
+        totalWithout: dataBilling.bill.totalWithout,
+        total: dataBilling.bill.total,
+        concepts: {
+            description: "discount",
+            subtotal: dataBilling.bill.concepts.subtotal
+        },
+        state: "billed"
     };
     logger.info("data");
     connectAndCreateInfluxDB(data);
@@ -42,12 +51,19 @@ function connectAndCreateInfluxDB(data) {
                     logger.info("Exist measurement");
                     influx.writeMeasurement("slo-evaluating", [{
                         fields: {
-                            from: data.from,
-                            to: data.to,
                             executeTime: new Date().toISOString(),
-                            value: data.result,
-                            billingDate: data.bill.billingDate,
-                            billTotal: data.bill.total
+                            provider: data.provider,
+                            consumer: data.consumer,
+                            initialDate: data.from,
+                            endDate: data.to,
+                            billingDate: data.bill.dataBilling,
+                            totalWithout: data.bill.totalWithout,
+                            total: data.bill.total,
+                            concepts: {
+                                description: "discount",
+                                subtotal: data.bill.concepts.subtotal
+                            },
+                            state: "billed"
                         }
                     }]);
                 } else {
@@ -80,12 +96,21 @@ function functionInsertData(data) {
         schema: [{
             measurement: "slo-evaluating",
             fields: {
-                from: Influx.FieldType.STRING,
-                to: Influx.FieldType.STRING,
                 executeTime: Influx.FieldType.STRING,
                 value: Influx.FieldType.INTEGER,
+                billTotal: Influx.FieldType.INTEGER,
+                provider: Influx.FieldType.STRING,
+                consumer: Influx.FieldType.STRING,
+                initialDate: Influx.FieldType.STRING,
+                endDate: Influx.FieldType.STRING,
                 billingDate: Influx.FieldType.STRING,
-                billTotal: Influx.FieldType.INTEGER
+                totalWithout: Influx.FieldType.INTEGER,
+                total: Influx.FieldType.INTEGER,
+                concepts: {
+                    description: Influx.FieldType.STRING,
+                    subtotal: Influx.FieldType.INTEGER
+                },
+                state: Influx.FieldType.STRING
             }
         }]
     });
@@ -94,12 +119,21 @@ function functionInsertData(data) {
             [{
                 measurement: "slo-evaluating",
                 fields: {
-                    from: data.from,
-                    to: data.to,
-                    executeTime: new Date().toISOString(),
-                    value: data.result,
-                    billingDate: data.bill.billingDate,
-                    billTotal: data.bill.total
+                    fields: {
+                        executeTime: new Date().toISOString(),
+                        provider: data.provider,
+                        consumer: data.consumer,
+                        initialDate: data.from,
+                        endDate: data.to,
+                        billingDate: data.bill.dataBilling,
+                        totalWithout: data.bill.totalWithout,
+                        total: data.bill.total,
+                        concepts: {
+                            description: "discount",
+                            subtotal: data.bill.concepts.subtotal
+                        },
+                        state: "billed"
+                    }
                 }
             }], {
                 database: "k8s"

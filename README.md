@@ -4,4 +4,4 @@ This API is in charge of calculating the invoice and the discounts that should b
 
 ### Configuration
 
-Is important to put the URL of api-evaluator in "src\backend\configurations\config.yaml"
+Is important to put the URL of api-evaluator in "src\backend\configurations\config.yaml" and the host and port of influxdb

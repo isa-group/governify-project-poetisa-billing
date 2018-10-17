@@ -51,7 +51,6 @@ exports.parse = function (agree, date) {
           getDataBilling(date, agree).then(bill => {
             var result = resultSLO;
             var infoBill = {
-              billId: 1,
               provider: agree.provider,
               consumer: agree.consumer,
               initialDate: date,
