@@ -58,10 +58,13 @@ exports.parse = function (agree, date) {
               billingDate: moment().format("YYYY-MM-DD"),
               totalWithout: eval(bill),
               total: (eval(bill) * resultSLO[0].percentage) / 100,
-              concepts: {
-                description: "discount",
-                subtotal: (result[0].bill * resultSLO[0].percentage) / 100
-              },
+              concepts: [{
+                description: "Discount %",
+                subtotal: resultSLO[0].percentage
+              }, {
+                description: "Bill",
+                subtotal: eval(bill)
+              }],
               state: "billed"
             };
             result[0].bill = infoBill;

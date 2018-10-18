@@ -12,7 +12,7 @@ production:
     ramMemory: 20000000
 
   data:
-    apiEvaluating: "http://10.99.169.45/api/v1/evaluate"
+    apiEvaluating: "http://10.111.112.166/api/v1/evaluate"
     hostInflux: 10.109.241.183
     portInflux: 8086
 
@@ -37,6 +37,8 @@ development:
 
   data:
     apiEvaluating: "http://localhost:5000/api/v1/evaluate"
+    hostInflux: localhost
+    portInflux: 30086
 
   log:
     level: debug
@@ -61,12 +63,12 @@ testing:
     ignore:
       - ""
       - ""
-
-  data:
-    apiEvaluating: "http://localhost:5000/api/v1/evaluate"
   log:
     level: debug
     file: "./logs/test-logs.log" #Where log file will be saved. Date will be concatenated before the name.
     maxSize: 10000000 #(10MB) Maximum file log size, if one file reaches it, a new file is created.
     maxFiles: 30 # Max Files that can be created per day reaching the maxSize.
-
+  data:
+    apiEvaluating: "http://localhost:5000/api/v1/evaluate"
+    hostInflux: localhost
+    portInflux: 30086
