@@ -59,10 +59,10 @@ exports.parse = function (agree, date) {
               totalWithout: eval(bill),
               total: (eval(bill) * resultSLO[0].percentage) / 100,
               concepts: [{
-                description: "Discount %",
+                description: Object.keys(agree.terms.pricing.billing.rewards[0].over)[0],
                 subtotal: resultSLO[0].percentage
               }, {
-                description: "Bill",
+                description: Object.keys(agree.terms.pricing.billing.cost.over)[0],
                 subtotal: eval(bill)
               }],
               state: "billed"
