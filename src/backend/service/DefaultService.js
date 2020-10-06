@@ -57,7 +57,7 @@ exports.parse = function (agree, date) {
               endDate: dateFrom.add(1, "M").format("YYYY-MM-DD"),
               billingDate: moment().format("YYYY-MM-DD"),
               totalWithout: eval(bill),
-              total: (eval(bill) * resultSLO[0].percentage) / 100,
+              total: eval(bill) - (eval(bill) * resultSLO[0].percentage) / 100,
               concepts: [{
                 description: Object.keys(agree.terms.pricing.billing.rewards[0].over)[0],
                 subtotal: resultSLO[0].percentage
