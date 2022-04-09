@@ -14,7 +14,7 @@
     "influx": "^5.0.7",
     "js-yaml": "^3.11.0",
     "materialize-css": "^0.100.2",
-    "moment": "^2.22.1",
+    "moment": "^2.29.2",
     "newman": "^3.9.3",
     "npm": "^6.0.1",
     "request": "^2.85.0",
